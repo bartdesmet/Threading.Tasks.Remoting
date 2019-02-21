@@ -13,7 +13,7 @@ namespace Bd.Threading.Tasks.Remoting
 
         public void Cancel() => _cts.Cancel();
 
-        public override object InitializeLifetimeService() => null;
+        // NB: Default lifetime for cancellation token sources. Use them immediately to obtain a token reference.
 
         private sealed class CancellationTokenRef : MarshalByRefObject, ICancellationToken
         {
@@ -21,20 +21,9 @@ namespace Bd.Threading.Tasks.Remoting
 
             public CancellationTokenRef(CancellationToken token) => _token = token;
 
-            public IDisposable Register(Action action) => new CancellationTokenRegistrationRef(_token.Register(action));
+            public IDisposable Register(Action action) => _token.Register(action); // NB: Register is called service-side, so doesn't need MBRO.
 
-            public override object InitializeLifetimeService() => null;
-
-            private sealed class CancellationTokenRegistrationRef : MarshalByRefObject, IDisposable
-            {
-                private readonly CancellationTokenRegistration _ctr;
-
-                public CancellationTokenRegistrationRef(CancellationTokenRegistration ctr) => _ctr = ctr;
-
-                public void Dispose() => _ctr.Dispose();
-
-                public override object InitializeLifetimeService() => null;
-            }
+            // NB: Default lifetime for cancellation tokens. Pass them immediately back to the service.
         }
     }
 }

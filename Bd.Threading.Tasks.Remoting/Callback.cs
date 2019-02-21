@@ -9,7 +9,5 @@ namespace Bd.Threading.Tasks.Remoting
         public Callback(Action action) => _action = action;
 
         public void Invoke() => _action();
-
-        public override object InitializeLifetimeService() => null;
     }
 }

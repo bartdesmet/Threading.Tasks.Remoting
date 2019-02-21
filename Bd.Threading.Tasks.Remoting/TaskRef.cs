@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.Remoting.Lifetime;
 using System.Threading.Tasks;
 
 namespace Bd.Threading.Tasks.Remoting
@@ -10,15 +11,29 @@ namespace Bd.Threading.Tasks.Remoting
 
         public TaskRef(Task task) => _task = task;
 
-        public ITaskAwaiter GetAwaiter() => new Awaiter(_task);
+        public ITaskAwaiter GetAwaiter()
+        {
+            var awaiter = new TaskAwaiterRef(_task);
 
-        public override object InitializeLifetimeService() => null;
+            if (!awaiter.IsCompleted)
+            {
+                var sponsor = new ClientSponsor();
 
-        private sealed class Awaiter : MarshalByRefObject, ITaskAwaiter
+                sponsor.Register(awaiter);
+
+                awaiter.OnCompleted(() => sponsor.Unregister(awaiter));
+            }
+
+            return awaiter;
+        }
+
+        // NB: Default lifetime for task references. You better await them soon after getting a proxy to them.
+
+        private sealed class TaskAwaiterRef : MarshalByRefObject, ITaskAwaiter
         {
             private readonly TaskAwaiter _awaiter;
 
-            public Awaiter(Task task) => _awaiter = task.GetAwaiter();
+            public TaskAwaiterRef(Task task) => _awaiter = task.GetAwaiter();
 
             public bool IsCompleted => _awaiter.IsCompleted;
 
@@ -26,7 +41,7 @@ namespace Bd.Threading.Tasks.Remoting
 
             public void GetResult() => _awaiter.GetResult();
 
-            public override object InitializeLifetimeService() => null;
+            // NB: Got a sponsor until the task completes.
         }
     }
 }

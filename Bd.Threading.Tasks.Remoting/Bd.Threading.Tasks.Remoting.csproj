@@ -55,6 +55,7 @@
     <Compile Include="ITaskAwaiter{T}.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TaskAwaiterProxyBase.cs" />
     <Compile Include="TaskProxy.cs" />
     <Compile Include="TaskProxy{T}.cs" />
     <Compile Include="TaskRef.cs" />

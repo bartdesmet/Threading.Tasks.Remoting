@@ -8,19 +8,19 @@ namespace Bd.Threading.Tasks.Remoting
 
         public TaskProxy(ITask task) => _task = task;
 
-        public ITaskAwaiter GetAwaiter() => new Awaiter(_task);
+        public ITaskAwaiter GetAwaiter() => new TaskAwaiterProxy(_task);
 
-        private sealed class Awaiter : ITaskAwaiter
+        private sealed class TaskAwaiterProxy : TaskAwaiterProxyBase, ITaskAwaiter
         {
             private readonly ITaskAwaiter _awaiter;
 
-            public Awaiter(ITask task) => _awaiter = task.GetAwaiter();
+            public TaskAwaiterProxy(ITask task) => _awaiter = task.GetAwaiter();
 
             public bool IsCompleted => _awaiter.IsCompleted;
 
             public void GetResult() => _awaiter.GetResult();
 
-            public void OnCompleted(Action action) => _awaiter.OnCompleted(new Callback(action).Invoke);
+            protected override void OnCompletedCore(Action action) => _awaiter.OnCompleted(action);
         }
     }
 }
